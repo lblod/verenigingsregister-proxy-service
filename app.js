@@ -1,5 +1,6 @@
 import { app } from 'mu';
-import verenigingenRouter from './lib/verenigingen.js';
+import express from 'express';
+import verenigingenRouter from './lib/verenigingenRouter.js';
 
 app.use(express.json());
 
