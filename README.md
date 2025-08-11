@@ -7,7 +7,7 @@ This service acts as a proxy for the Verenigingsregister API, handling authentic
 - Forwards requests to the Verenigingsregister API
 - Removes sensitive headers before forwarding
 - Handles authentication using OAuth2 access tokens
-- Checks authorization for incoming requests
+- Checks authorization for incoming requests: checks `verenigingen-beheerder` role. 
 - Supports CRUD operations for verenigingen, contactgegevens, lidmaatschappen, locaties, and vertegenwoordigers
 
 ## Usage
