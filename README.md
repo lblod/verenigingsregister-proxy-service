@@ -8,7 +8,7 @@ This service acts as a proxy for the Verenigingsregister API, handling authentic
 - Removes sensitive headers before forwarding
 - Handles authentication using OAuth2 access tokens
 - Checks authorization for incoming requests: checks `verenigingen-beheerder` role. 
-- Supports CRUD operations for verenigingen, contactgegevens, lidmaatschappen, locaties, and vertegenwoordigers
+- Supports CRUD operations for verenigingen, contactgegevens, locaties, and vertegenwoordigers
 
 ## Usage
 
@@ -45,9 +45,6 @@ For Production:
 - `POST /verenigingen/:vCode/contactgegevens`
 - `PATCH /verenigingen/:vCode/contactgegevens/:id`
 - `DELETE /verenigingen/:vCode/contactgegevens/:id`
-- `POST /verenigingen/:vCode/lidmaatschappen`
-- `PATCH /verenigingen/:vCode/lidmaatschappen/:id`
-- `DELETE /verenigingen/:vCode/lidmaatschappen/:id`
 - `POST /verenigingen/:vCode/locaties`
 - `PATCH /verenigingen/:vCode/locaties/:id`
 - `DELETE /verenigingen/:vCode/locaties/:id`
