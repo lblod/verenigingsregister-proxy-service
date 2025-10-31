@@ -1,6 +1,6 @@
 {
   "name": "verenigingsregister-proxy-service",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Proxy service for the Verenigingsregister API with authentication and authorization",
   "main": "app.js",
   "type": "module",
