@@ -1,6 +1,25 @@
 {
+  "name": "verenigingsregister-proxy-service",
+  "version": "1.0.0",
+  "description": "Proxy service for the Verenigingsregister API with authentication and authorization",
+  "main": "app.js",
+  "type": "module",
   "dependencies": {
+    "@lblod/mu-auth-sudo": "^0.6.2",
     "axios": "^1.9.0",
     "jsonwebtoken": "^9.0.0"
-  }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lblod/verenigingsregister-proxy-service.git"
+  },
+  "author": "info@redpencil.io",
+  "bugs": {
+    "url": "https://github.com/lblod/verenigingsregister-proxy-service/issues"
+  },
+  "homepage": "https://github.com/lblod/verenigingsregister-proxy-service#readme",
+  "license": "MIT"
 }

@@ -9,3 +9,7 @@ export const API_VERSION = process.env.API_VERSION || 'v1';
 export const EDITOR_ROLE = 'verenigingen-beheerder';
 export const HEADER_MU_SESSION_ID = 'mu-session-id';
 export const MU_REQUEST_HEADERS = ['mu-session-id', 'mu-auth-allowed-groups'];
+export const ORGANISATION_GRAPH = process.env.ORGANISATION_GRAPH || 'http://mu.semte.ch/graphs/public';
+export const SESSION_GRAPH = process.env.SESSION_GRAPH || 'http://mu.semte.ch/graphs/sessions';
+export const PROCESSING_AGREEMENT_GRAPH = process.env.PROCESSING_AGREEMENT_GRAPH || 'http://mu.semte.ch/graphs/processing-agreements';
+export const ENABLE_PROCESSING_AGREEMENT_CHECK = process.env.ENABLE_PROCESSING_AGREEMENT_CHECK !== 'false';
