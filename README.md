@@ -53,16 +53,16 @@ The following environment variables are read from `constants.js`:
 
 ```yaml
 environment:
-  ENVIRONMENT: "DEV"
-  AUD: "https://authenticatie-ti.vlaanderen.be/op"
-  API_URL: "https://iv.api.tni-vlaanderen.be/api/v1/organisaties/verenigingen/"
-  AUTHORIZATION_KEY: "your-base64-key"
-  AUTH_DOMAIN: "authenticatie-ti.vlaanderen.be"
-  SCOPE: "dv_magda_organisaties_verenigingen_verenigingen_v1_G dv_magda_organisaties_verenigingen_verenigingen_v1_A dv_magda_organisaties_verenigingen_verenigingen_v1_P dv_magda_organisaties_verenigingen_verenigingen_v1_D"
-  SESSION_GRAPH: "http://mu.semte.ch/graphs/sessions"
-  ORGANISATION_GRAPH: "http://mu.semte.ch/graphs/public"
-  CLIENT_CONFIG_GRAPH: "http://mu.semte.ch/graphs/client-configurations"
-  ENABLE_PROCESSING_AGREEMENT_CHECK: "false"
+  ENVIRONMENT: 'DEV'
+  AUD: 'https://authenticatie-ti.vlaanderen.be/op'
+  API_URL: 'https://iv.api.tni-vlaanderen.be/api/v1/organisaties/verenigingen/'
+  AUTHORIZATION_KEY: 'your-base64-key'
+  AUTH_DOMAIN: 'authenticatie-ti.vlaanderen.be'
+  SCOPE: 'dv_magda_organisaties_verenigingen_verenigingen_v1_G dv_magda_organisaties_verenigingen_verenigingen_v1_A dv_magda_organisaties_verenigingen_verenigingen_v1_P dv_magda_organisaties_verenigingen_verenigingen_v1_D'
+  SESSION_GRAPH: 'http://mu.semte.ch/graphs/sessions'
+  ORGANISATION_GRAPH: 'http://mu.semte.ch/graphs/public'
+  CLIENT_CONFIG_GRAPH: 'http://mu.semte.ch/graphs/client-configurations'
+  ENABLE_PROCESSING_AGREEMENT_CHECK: 'false'
 ```
 
 **Note:** In DEV mode, OAuth2 client credentials are resolved per-organization from `CLIENT_CONFIG_GRAPH`.
@@ -71,19 +71,15 @@ environment:
 
 ```yaml
 environment:
-  ENVIRONMENT: "PROD"
-  AUD: "https://authenticatie.vlaanderen.be/op"
-  SCOPE: "dv_magda_organisaties_verenigingen_verenigingen_v1_G dv_magda_organisaties_verenigingen_verenigingen_v1_A dv_magda_organisaties_verenigingen_verenigingen_v1_P dv_magda_organisaties_verenigingen_verenigingen_v1_D"
-  SESSION_GRAPH: "http://mu.semte.ch/graphs/sessions"
-  ORGANISATION_GRAPH: "http://mu.semte.ch/graphs/public"
-  CLIENT_CONFIG_GRAPH: "http://mu.semte.ch/graphs/client-configurations"
+  ENVIRONMENT: 'PROD'
+  AUD: 'https://authenticatie.vlaanderen.be/op'
+  SCOPE: 'dv_magda_organisaties_verenigingen_verenigingen_v1_G dv_magda_organisaties_verenigingen_verenigingen_v1_A dv_magda_organisaties_verenigingen_verenigingen_v1_P dv_magda_organisaties_verenigingen_verenigingen_v1_D'
+  SESSION_GRAPH: 'http://mu.semte.ch/graphs/sessions'
+  ORGANISATION_GRAPH: 'http://mu.semte.ch/graphs/public'
+  CLIENT_CONFIG_GRAPH: 'http://mu.semte.ch/graphs/client-configurations'
 volumes:
   - ./config/verenigingen-api-proxy:/config
 ```
-
-**Note:** In PROD mode, each organization must have:
-- A `.pem` file with their RSA private key mounted in `/config` directory
-- OAuth2 client configuration stored in `CLIENT_CONFIG_GRAPH`
 
 ## Authorization & Processing Agreements
 
@@ -92,8 +88,7 @@ volumes:
 The service implements a multi-layer authorization system:
 
 1. **Role Check**: Validates that the user has the `verenigingen-beheerder` role via the `mu-auth-allowed-groups` header
-2. **Session to OVO Code Mapping**: Extracts the OVO code (organization identifier) from the user's session using a SPARQL query
-3. **Processing Agreement Validation** (optional): Verifies that the organization has a valid processing agreement
+2. **Processing Agreement Validation** (optional): Verifies that the organization has a valid processing agreement
 
 ### OVO Code Resolution
 
@@ -117,11 +112,6 @@ SELECT DISTINCT ?identifier WHERE {
   }
 }
 ```
-
-**Requirements:**
-
-- Exactly one OVO code must be found per session
-- The service will reject requests with zero or multiple OVO codes
 
 ### Processing Agreements Model
 
@@ -147,7 +137,7 @@ The agreements in full and their lifecycle are assumed to be managed elsewhere.
 
 ## Authentication & Token Management
 
-The service uses a multi-tenant authentication approach where each organization (linked to the session) has its own OAuth2 client credentials.
+The service uses a multi-tenant authentication approach where each organization (linked to the session) has its own OAuth2 client.
 
 ### Client ID Resolution
 
