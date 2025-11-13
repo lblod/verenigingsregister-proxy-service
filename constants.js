@@ -1,5 +1,4 @@
 export const SCOPE = process.env.SCOPE;
-export const CLIENT_ID = process.env.CLIENT_ID;
 export const ENVIRONMENT = process.env.ENVIRONMENT || 'DEV';
 export const AUTHORIZATION_KEY = process.env.AUTHORIZATION_KEY || '';
 export const AUD = process.env.AUD;
@@ -12,4 +11,5 @@ export const MU_REQUEST_HEADERS = ['mu-session-id', 'mu-auth-allowed-groups'];
 export const ORGANISATION_GRAPH = process.env.ORGANISATION_GRAPH || 'http://mu.semte.ch/graphs/public';
 export const SESSION_GRAPH = process.env.SESSION_GRAPH || 'http://mu.semte.ch/graphs/sessions';
 export const PROCESSING_AGREEMENT_GRAPH = process.env.PROCESSING_AGREEMENT_GRAPH || 'http://mu.semte.ch/graphs/processing-agreements';
+export const CLIENT_CONFIG_GRAPH = process.env.CLIENT_CONFIG_GRAPH || 'http://mu.semte.ch/graphs/client-configurations';
 export const ENABLE_PROCESSING_AGREEMENT_CHECK = process.env.ENABLE_PROCESSING_AGREEMENT_CHECK !== 'false';

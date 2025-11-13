@@ -6,12 +6,13 @@ This service acts as a proxy for the Verenigingsregister API, handling authentic
 
 - Forwards requests to the Verenigingsregister API
 - Removes sensitive headers before forwarding
-- Handles authentication using OAuth2 access tokens with caching
+- Handles authentication using OAuth2 access tokens with per-client caching
+- Multi-tenant support: Each organization has its own OAuth2 client credentials
 - Multi-layer authorization:
   - Role-based: checks `verenigingen-beheerder` role
   - Processing agreements: validates organization has processing agreement (configurable)
 - Supports CRUD operations for verenigingen, contactgegevens, locaties, and vertegenwoordigers
-- Built-in caching for OVO codes and processing agreements (24-hour TTL with automatic cleanup)
+- Axios configured to handle 304 (Not Modified) responses gracefully
 
 ## Configuration
 
@@ -24,7 +25,6 @@ The following environment variables are read from `constants.js`:
 | Variable            | Required | Default                                                          | Description                                                                 |
 | ------------------- | -------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | `SCOPE`             | Yes      | -                                                                | OAuth2 scopes for API access (space-separated)                              |
-| `CLIENT_ID`         | Yes      | -                                                                | OAuth2 client identifier                                                    |
 | `AUD`               | Yes      | -                                                                | OAuth2 audience/authorization server URL                                    |
 | `ENVIRONMENT`       | No       | `DEV`                                                            | Environment mode: `DEV` (uses Basic Auth) or `PROD` (uses JWT with RSA key) |
 | `AUTHORIZATION_KEY` | DEV only | `''`                                                             | Base64-encoded Basic Auth credentials for DEV mode                          |
@@ -38,6 +38,7 @@ The following environment variables are read from `constants.js`:
 | ----------------------------------- | -------- | ------------------------------------------------- | -------------------------------------------------------------------------------- |
 | `SESSION_GRAPH`                     | No       | `http://mu.semte.ch/graphs/sessions`              | SPARQL graph URI containing session data                                         |
 | `ORGANISATION_GRAPH`                | No       | `http://mu.semte.ch/graphs/public`                | SPARQL graph URI containing organization/OVO code data                           |
+| `CLIENT_CONFIG_GRAPH`               | No       | `http://mu.semte.ch/graphs/client-configurations` | SPARQL graph URI containing OAuth2 client configuration per organization         |
 | `PROCESSING_AGREEMENT_GRAPH`        | No       | `http://mu.semte.ch/graphs/processing-agreements` | SPARQL graph URI containing processing agreement data                            |
 | `ENABLE_PROCESSING_AGREEMENT_CHECK` | No       | `true`                                            | _FEATURE FLAG_ Enable processing agreement validation. Set to `false` to disable |
 
@@ -52,28 +53,30 @@ The following environment variables are read from `constants.js`:
 
 ```yaml
 environment:
-  ENVIRONMENT: "DEV"
-  AUD: "https://authenticatie-ti.vlaanderen.be/op"
-  API_URL: "https://iv.api.tni-vlaanderen.be/api/v1/organisaties/verenigingen/"
-  AUTHORIZATION_KEY: "your-base64-key"
-  AUTH_DOMAIN: "authenticatie-ti.vlaanderen.be"
-  CLIENT_ID: "your-client-id"
-  SCOPE: "dv_magda_organisaties_verenigingen_verenigingen_v1_G dv_magda_organisaties_verenigingen_verenigingen_v1_A dv_magda_organisaties_verenigingen_verenigingen_v1_P dv_magda_organisaties_verenigingen_verenigingen_v1_D"
-  SESSION_GRAPH: "http://mu.semte.ch/graphs/sessions"
-  ORGANISATION_GRAPH: "http://mu.semte.ch/graphs/public"
-  ENABLE_PROCESSING_AGREEMENT_CHECK: "false"
+  ENVIRONMENT: 'DEV'
+  AUD: 'https://authenticatie-ti.vlaanderen.be/op'
+  API_URL: 'https://iv.api.tni-vlaanderen.be/api/v1/organisaties/verenigingen/'
+  AUTHORIZATION_KEY: 'your-base64-key'
+  AUTH_DOMAIN: 'authenticatie-ti.vlaanderen.be'
+  SCOPE: 'dv_magda_organisaties_verenigingen_verenigingen_v1_G dv_magda_organisaties_verenigingen_verenigingen_v1_A dv_magda_organisaties_verenigingen_verenigingen_v1_P dv_magda_organisaties_verenigingen_verenigingen_v1_D'
+  SESSION_GRAPH: 'http://mu.semte.ch/graphs/sessions'
+  ORGANISATION_GRAPH: 'http://mu.semte.ch/graphs/public'
+  CLIENT_CONFIG_GRAPH: 'http://mu.semte.ch/graphs/client-configurations'
+  ENABLE_PROCESSING_AGREEMENT_CHECK: 'false'
 ```
+
+**Note:** In DEV mode, OAuth2 client credentials are resolved per-organization from `CLIENT_CONFIG_GRAPH`.
 
 #### Production
 
 ```yaml
 environment:
-  ENVIRONMENT: "PROD"
-  AUD: "https://authenticatie.vlaanderen.be/op"
-  CLIENT_ID: "your-client-id"
-  SCOPE: "dv_magda_organisaties_verenigingen_verenigingen_v1_G dv_magda_organisaties_verenigingen_verenigingen_v1_A dv_magda_organisaties_verenigingen_verenigingen_v1_P dv_magda_organisaties_verenigingen_verenigingen_v1_D"
-  SESSION_GRAPH: "http://mu.semte.ch/graphs/sessions"
-  ORGANISATION_GRAPH: "http://mu.semte.ch/graphs/public"
+  ENVIRONMENT: 'PROD'
+  AUD: 'https://authenticatie.vlaanderen.be/op'
+  SCOPE: 'dv_magda_organisaties_verenigingen_verenigingen_v1_G dv_magda_organisaties_verenigingen_verenigingen_v1_A dv_magda_organisaties_verenigingen_verenigingen_v1_P dv_magda_organisaties_verenigingen_verenigingen_v1_D'
+  SESSION_GRAPH: 'http://mu.semte.ch/graphs/sessions'
+  ORGANISATION_GRAPH: 'http://mu.semte.ch/graphs/public'
+  CLIENT_CONFIG_GRAPH: 'http://mu.semte.ch/graphs/client-configurations'
 volumes:
   - ./config/verenigingen-api-proxy:/config
 ```
@@ -85,8 +88,7 @@ volumes:
 The service implements a multi-layer authorization system:
 
 1. **Role Check**: Validates that the user has the `verenigingen-beheerder` role via the `mu-auth-allowed-groups` header
-2. **Session to OVO Code Mapping**: Extracts the OVO code (organization identifier) from the user's session using a SPARQL query
-3. **Processing Agreement Validation** (optional): Verifies that the organization has a valid processing agreement
+2. **Processing Agreement Validation** (optional): Verifies that the organization has a valid processing agreement
 
 ### OVO Code Resolution
 
@@ -111,12 +113,6 @@ SELECT DISTINCT ?identifier WHERE {
 }
 ```
 
-**Requirements:**
-
-- Exactly one OVO code must be found per session
-- The service will reject requests with zero or multiple OVO codes
-- OVO codes are cached for 24 hours per session ID
-
 ### Processing Agreements Model
 
 **Note:** Processing agreement validation is currently a placeholder implementation.
@@ -139,15 +135,50 @@ Assumption: the PROCESSING_AGREEMENT_GRAPH contains only currently valid subproc
 We only check for existence of agreements, not validity periods.
 The agreements in full and their lifecycle are assumed to be managed elsewhere.
 
-### Caching
+## Authentication & Token Management
 
-Both OVO codes and processing agreements are cached to reduce SPARQL query load:
+The service uses a multi-tenant authentication approach where each organization (linked to the session) has its own OAuth2 client.
 
-- **Cache Duration**: 24 hours
-- **Cleanup Frequency**: Hourly automatic cleanup of expired entries
-- **Cache Keys**:
-  - OVO codes: keyed by session ID
-  - Processing agreements: keyed by OVO code
+### Client ID Resolution
+
+For each request, the service resolves the client ID from the session using a SPARQL query:
+
+```sparql
+PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+PREFIX adms: <http://www.w3.org/ns/adms#>
+PREFIX wotsec: <https://www.w3.org/2019/wot/security#>
+PREFIX dct: <http://purl.org/dc/terms/>
+
+SELECT DISTINCT ?clientId WHERE {
+  GRAPH <${SESSION_GRAPH}> {
+    ${sessionId}
+      ext:sessionGroup ?adminUnit .
+  }
+
+  GRAPH <${CLIENT_CONFIG_GRAPH}> {
+    ?adminUnit
+      ext:hasSecurityScheme ?oAuthConfig .
+
+    ?oAuthConfig
+      a wotsec:OAuth2SecurityScheme ;
+      dct:identifier ?clientId .
+  }
+}
+```
+
+**Requirements:**
+
+- Exactly one client ID must be found per session
+- The service will reject requests with zero or multiple client IDs
+
+### Token Caching
+
+Access tokens are cached per client ID to improve performance:
+
+- Tokens are cached in memory with their expiration time
+- A 60-second safety margin is applied before expiration
+- When a cached token is still valid, it's reused without making a new token request
+- Each organization's tokens are cached independently
 
 ## API Endpoints
 
