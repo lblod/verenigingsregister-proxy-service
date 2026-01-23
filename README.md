@@ -42,6 +42,7 @@ The following environment variables are read from `constants.js`:
 | `CLIENT_CONFIG_GRAPH`               | No       | `http://mu.semte.ch/graphs/client-configurations` | SPARQL graph URI containing OAuth2 client configuration per organization         |
 | `PROCESSING_AGREEMENT_GRAPH`        | No       | `http://mu.semte.ch/graphs/processing-agreements` | SPARQL graph URI containing processing agreement data                            |
 | `ENABLE_PROCESSING_AGREEMENT_CHECK` | No       | `true`                                            | _FEATURE FLAG_ Enable processing agreement validation. Set to `false` to disable |
+| `ENABLE_REQUEST_REASON_CHECK`       | No       | `true`                                            | _FEATURE FLAG_ Enable X-Request-Reason header validation. Set to `false` to disable |
 | `DATA_ACCESS_LOG_GRAPH`             | No       | `http://mu.semte.ch/graphs/data-access-logs`      | SPARQL graph URI for storing data access logs                                    |
 | `ASSOCIATIONS_GRAPH`                | No       | `http://mu.semte.ch/graphs/organizations`         | SPARQL graph URI containing association data (used for werkingsgebied check)     |
 | `FALLBACK_HEAD_CLIENT_ID`           | No       | `''`                                              | Fallback OAuth2 client ID for HEAD requests when no per-org client is available  |
@@ -206,7 +207,7 @@ Access tokens are cached per client ID to improve performance:
 
 ### Read Operations (requires `verenigingen-beheerder` or `verenigingen-lezer` role)
 
-- `GET /verenigingen/:vCode` - Retrieve association details. Requires `X-Request-Reason` header (see [Data Access Logging](#data-access-logging)). Performs werkingsgebied check.
+- `GET /verenigingen/:vCode` - Retrieve association details. Requires `X-Request-Reason` header when `ENABLE_REQUEST_REASON_CHECK=true` (see [Data Access Logging](#data-access-logging)). Performs werkingsgebied check.
 - `HEAD /verenigingen/:vCode` - Check resource existence without logging. Uses fallback client if no per-org client configured (`FALLBACK_HEAD_CLIENT_ID`).
 
 ### Write Operations (requires `verenigingen-beheerder` role only)
@@ -277,7 +278,9 @@ The service logs all `GET /verenigingen/:vCode` requests to the triple store for
 
 ### X-Request-Reason Header
 
-The `GET /verenigingen/:vCode` endpoint requires a mandatory `X-Request-Reason` header containing a valid reason code UUID. This header is validated against the triple store before the request is processed.
+When `ENABLE_REQUEST_REASON_CHECK=true` (default), the `GET /verenigingen/:vCode` endpoint requires a mandatory `X-Request-Reason` header containing a valid reason code UUID. This header is validated against the triple store before the request is processed.
+
+Set `ENABLE_REQUEST_REASON_CHECK=false` to disable this validation (e.g., for development or testing).
 
 **Request Example:**
 
