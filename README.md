@@ -43,6 +43,7 @@ The following environment variables are read from `constants.js`:
 | `PROCESSING_AGREEMENT_GRAPH`        | No       | `http://mu.semte.ch/graphs/processing-agreements` | SPARQL graph URI containing processing agreement data                            |
 | `ENABLE_PROCESSING_AGREEMENT_CHECK` | No       | `true`                                            | _FEATURE FLAG_ Enable processing agreement validation. Set to `false` to disable |
 | `ENABLE_REQUEST_REASON_CHECK`       | No       | `true`                                            | _FEATURE FLAG_ Enable X-Request-Reason header validation. Set to `false` to disable |
+| `ENABLE_TERRITORY_CHECK`            | No       | `true`                                            | _FEATURE FLAG_ Enable werkingsgebied (territory) validation. Set to `false` to disable |
 | `DATA_ACCESS_LOG_GRAPH`             | No       | `http://mu.semte.ch/graphs/data-access-logs`      | SPARQL graph URI for storing data access logs                                    |
 | `ASSOCIATIONS_GRAPH`                | No       | `http://mu.semte.ch/graphs/organizations`         | SPARQL graph URI containing association data (used for werkingsgebied check)     |
 | `FALLBACK_HEAD_CLIENT_ID`           | No       | `''`                                              | Fallback OAuth2 client ID for HEAD requests when no per-org client is available  |
@@ -97,7 +98,7 @@ The service implements a multi-layer authorization system:
    - `verenigingen-beheerder` (editor): Full access to all operations
    - `verenigingen-lezer` (viewer): Read-only access (GET and HEAD requests only)
 2. **Processing Agreement Validation** (optional): Verifies that the organization has a valid processing agreement
-3. **Werkingsgebied Check**: For association-specific requests, validates that the user's admin unit's werkingsgebied covers the association's primary site postal code
+3. **Werkingsgebied Check** (optional): For association-specific requests, validates that the user's admin unit's werkingsgebied covers the association's primary site postal code
 
 ### OVO Code Resolution
 
