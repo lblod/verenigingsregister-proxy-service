@@ -210,6 +210,7 @@ Access tokens are cached per client ID to improve performance:
 
 - `GET /verenigingen/:vCode` - Retrieve association details. Requires `X-Request-Reason` header when `ENABLE_REQUEST_REASON_CHECK=true` (see [Data Access Logging](#data-access-logging)). Performs werkingsgebied check.
 - `HEAD /verenigingen/:vCode` - Check resource existence without logging. Uses fallback client if no per-org client configured (`FALLBACK_HEAD_CLIENT_ID`).
+- `GET /verenigingen/:vCode/authorization-check` - Authorization pre-check. Validates role, processing agreement, and werkingsgebied checks without requiring `X-Request-Reason` and without accessing or returning association data. Returns JSON with authorization result and denial details.
 
 ### Write Operations (requires `verenigingen-beheerder` role only)
 
@@ -269,6 +270,26 @@ HTTP 401
 HTTP 403
 {
   "error": "Forbidden",
+  "detail": "Admin unit does not cover association werkingsgebied"
+}
+```
+
+**Authorization Pre-check - Authorized:**
+
+```json
+HTTP 200
+{
+  "authorized": true,
+  "detail": "Request authorized"
+}
+```
+
+**Authorization Pre-check - Denied:**
+
+```json
+HTTP 403
+{
+  "authorized": false,
   "detail": "Admin unit does not cover association werkingsgebied"
 }
 ```
