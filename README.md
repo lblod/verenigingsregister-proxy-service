@@ -211,6 +211,7 @@ Access tokens are cached per client ID to improve performance:
 - `GET /verenigingen/:vCode` - Retrieve association details. Requires `X-Request-Reason` header when `ENABLE_REQUEST_REASON_CHECK=true` (see [Data Access Logging](#data-access-logging)). Performs werkingsgebied check.
 - `HEAD /verenigingen/:vCode` - Check resource existence without logging. Uses fallback client if no per-org client configured (`FALLBACK_HEAD_CLIENT_ID`).
 - `GET /verenigingen/:vCode/authorization-check` - Authorization pre-check. Validates role, processing agreement, and werkingsgebied checks without requiring `X-Request-Reason` and without accessing or returning association data. Returns JSON with authorization result and denial details.
+- `GET /verenigingen/:vCode/basisinformatie` - Retrieve non-sensitive association data (detail API with sensitive fields stripped). Role check only (no processing agreement, territory, reason checks, or data access logging).
 
 ### Write Operations (requires `verenigingen-beheerder` role only)
 
