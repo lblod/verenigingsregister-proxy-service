@@ -17,5 +17,5 @@ export const ENABLE_PROCESSING_AGREEMENT_CHECK = process.env.ENABLE_PROCESSING_A
 export const ENABLE_REQUEST_REASON_CHECK = process.env.ENABLE_REQUEST_REASON_CHECK !== 'false';
 export const ENABLE_TERRITORY_CHECK = process.env.ENABLE_TERRITORY_CHECK !== 'false';
 export const DATA_ACCESS_LOG_GRAPH = process.env.DATA_ACCESS_LOG_GRAPH || 'http://mu.semte.ch/graphs/data-access-logs';
-export const FALLBACK_HEAD_CLIENT_ID = process.env.FALLBACK_HEAD_CLIENT_ID || '';
+export const FALLBACK_CLIENT_ID = process.env.FALLBACK_CLIENT_ID || process.env.FALLBACK_HEAD_CLIENT_ID || '';
 export const ASSOCIATIONS_GRAPH = process.env.ASSOCIATIONS_GRAPH || 'http://mu.semte.ch/graphs/organizations';
