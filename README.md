@@ -9,7 +9,7 @@ This service acts as a proxy for the Verenigingsregister API, handling authentic
 - Handles authentication using OAuth2 access tokens with per-client caching
 - Multi-tenant support: Each organization has its own OAuth2 client credentials
 - Multi-layer authorization:
-  - Role-based: checks `verenigingen-beheerder` (editor) or `verenigingen-lezer` (viewer, read-only) roles
+  - Role-based: checks `verenigingen-beheerder` role
   - Processing agreements: validates organization has processing agreement (configurable)
   - Werkingsgebied: validates the user's admin unit (commune) covers the association's postal code area
 - Supports CRUD operations for verenigingen, contactgegevens, locaties, and vertegenwoordigers
@@ -52,7 +52,6 @@ The following environment variables are read from `constants.js`:
 
 - In `PROD` mode, a `.pem` file containing the RSA private key must be mounted in `/config` directory
 - The `EDITOR_ROLE` is hardcoded to `verenigingen-beheerder` in constants.js
-- The `VIEWER_ROLE` is hardcoded to `verenigingen-lezer` in constants.js (allows read-only access)
 
 ### Usage Examples
 
@@ -94,9 +93,8 @@ volumes:
 
 The service implements a multi-layer authorization system:
 
-1. **Role Check**: Validates user roles via the `mu-auth-allowed-groups` header:
-   - `verenigingen-beheerder` (editor): Full access to all operations
-   - `verenigingen-lezer` (viewer): Read-only access (GET and HEAD requests only)
+1. **Role Check**: Validates user role via the `mu-auth-allowed-groups` header:
+   - `verenigingen-beheerder`: Full access to all operations
 2. **Processing Agreement Validation** (optional): Verifies that the organization has a valid processing agreement
 3. **Werkingsgebied Check** (optional): For association-specific requests, validates that the user's admin unit's werkingsgebied covers the association's primary site postal code
 
@@ -206,14 +204,14 @@ Access tokens are cached per client ID to improve performance:
 
 ## API Endpoints
 
-### Read Operations (requires `verenigingen-beheerder` or `verenigingen-lezer` role)
+### Read Operations (requires `verenigingen-beheerder` role)
 
 - `GET /verenigingen/:vCode` - Retrieve association details. Requires `X-Request-Reason` header when `ENABLE_REQUEST_REASON_CHECK=true` (see [Data Access Logging](#data-access-logging)). Performs werkingsgebied check.
 - `HEAD /verenigingen/:vCode` - Check resource existence without logging. Uses fallback client if no per-org client configured (`FALLBACK_HEAD_CLIENT_ID`).
 - `GET /verenigingen/:vCode/authorization-check` - Authorization pre-check. Validates role, processing agreement, and werkingsgebied checks without requiring `X-Request-Reason` and without accessing or returning association data. Returns JSON with authorization result and denial details.
 - `GET /verenigingen/:vCode/basisinformatie` - Retrieve non-sensitive association data (detail API with sensitive fields stripped). Role check only (no processing agreement, territory, reason checks, or data access logging).
 
-### Write Operations (requires `verenigingen-beheerder` role only)
+### Write Operations (requires `verenigingen-beheerder` role)
 
 - `POST /verenigingen/:vCode/contactgegevens`
 - `PATCH /verenigingen/:vCode/contactgegevens/:id`
@@ -235,23 +233,13 @@ All endpoints return detailed authorization failure messages:
 HTTP 200/201/204
 ```
 
-**Unauthorized - Missing Role (write operations):**
+**Unauthorized - Missing Role:**
 
 ```json
 HTTP 401
 {
   "error": "Unauthorized",
   "detail": "Missing required role: verenigingen-beheerder"
-}
-```
-
-**Unauthorized - Missing Role (read operations):**
-
-```json
-HTTP 401
-{
-  "error": "Unauthorized",
-  "detail": "Missing required role: verenigingen-beheerder or verenigingen-lezer"
 }
 ```
 

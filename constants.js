@@ -6,7 +6,6 @@ export const AUTH_DOMAIN = process.env.AUTH_DOMAIN || 'authenticatie.vlaanderen.
 export const API_BASE = process.env.API_URL || 'https://iv.api.vlaanderen.be/api/v1/organisaties/verenigingen/';
 export const API_VERSION = process.env.API_VERSION || 'v1';
 export const EDITOR_ROLE = 'verenigingen-beheerder';
-export const VIEWER_ROLE = 'verenigingen-lezer';
 export const HEADER_MU_SESSION_ID = 'mu-session-id';
 export const MU_REQUEST_HEADERS = ['mu-session-id', 'mu-auth-allowed-groups'];
 export const ORGANISATION_GRAPH = process.env.ORGANISATION_GRAPH || 'http://mu.semte.ch/graphs/public';
