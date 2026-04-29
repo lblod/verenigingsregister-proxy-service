@@ -27,8 +27,6 @@ The following environment variables are read from `constants.js`:
 | ------------------- | -------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | `SCOPE`             | Yes      | -                                                                | OAuth2 scopes for API access (space-separated)                              |
 | `AUD`               | Yes      | -                                                                | OAuth2 audience/authorization server URL                                    |
-| `ENVIRONMENT`       | No       | `DEV`                                                            | Environment mode: `DEV` (uses Basic Auth) or `PROD` (uses JWT with RSA key) |
-| `AUTHORIZATION_KEY` | DEV only | `''`                                                             | Base64-encoded Basic Auth credentials for DEV mode                          |
 | `AUTH_DOMAIN`       | No       | `authenticatie.vlaanderen.be`                                    | Authentication domain for token endpoint                                    |
 | `API_URL`           | No       | `https://iv.api.vlaanderen.be/api/v1/organisaties/verenigingen/` | Base URL for the Verenigingsregister API                                    |
 | `API_VERSION`       | No       | `v1`                                                             | API version sent in `vr-api-version` header                                 |
@@ -50,34 +48,13 @@ The following environment variables are read from `constants.js`:
 
 **Note:**
 
-- In `PROD` mode, a `.pem` file containing the RSA private key must be mounted in `/config` directory
+- A `.pem` file containing the RSA private key must be mounted in `/config` directory; tokens are fetched via JWT client assertions (RS256)
 - The `EDITOR_ROLE` is hardcoded to `verenigingen-beheerder` in constants.js
 
-### Usage Examples
-
-#### Development (T&I API)
+### Usage Example
 
 ```yaml
 environment:
-  ENVIRONMENT: 'DEV'
-  AUD: 'https://authenticatie-ti.vlaanderen.be/op'
-  API_URL: 'https://iv.api.tni-vlaanderen.be/api/v1/organisaties/verenigingen/'
-  AUTHORIZATION_KEY: 'your-base64-key'
-  AUTH_DOMAIN: 'authenticatie-ti.vlaanderen.be'
-  SCOPE: 'dv_magda_organisaties_verenigingen_verenigingen_v1_G dv_magda_organisaties_verenigingen_verenigingen_v1_A dv_magda_organisaties_verenigingen_verenigingen_v1_P dv_magda_organisaties_verenigingen_verenigingen_v1_D'
-  SESSION_GRAPH: 'http://mu.semte.ch/graphs/sessions'
-  ORGANISATION_GRAPH: 'http://mu.semte.ch/graphs/public'
-  CLIENT_CONFIG_GRAPH: 'http://mu.semte.ch/graphs/client-configurations'
-  ENABLE_PROCESSING_AGREEMENT_CHECK: 'false'
-```
-
-**Note:** In DEV mode, OAuth2 client credentials are resolved per-organization from `CLIENT_CONFIG_GRAPH`.
-
-#### Production
-
-```yaml
-environment:
-  ENVIRONMENT: 'PROD'
   AUD: 'https://authenticatie.vlaanderen.be/op'
   SCOPE: 'dv_magda_organisaties_verenigingen_verenigingen_v1_G dv_magda_organisaties_verenigingen_verenigingen_v1_A dv_magda_organisaties_verenigingen_verenigingen_v1_P dv_magda_organisaties_verenigingen_verenigingen_v1_D'
   SESSION_GRAPH: 'http://mu.semte.ch/graphs/sessions'
@@ -86,6 +63,8 @@ environment:
 volumes:
   - ./config/verenigingen-api-proxy:/config
 ```
+
+OAuth2 client credentials are resolved per-organization from `CLIENT_CONFIG_GRAPH`.
 
 ## Authorization & Processing Agreements
 

@@ -1,6 +1,4 @@
 export const SCOPE = process.env.SCOPE;
-export const ENVIRONMENT = process.env.ENVIRONMENT || 'DEV';
-export const AUTHORIZATION_KEY = process.env.AUTHORIZATION_KEY || '';
 export const AUD = process.env.AUD;
 export const AUTH_DOMAIN = process.env.AUTH_DOMAIN || 'authenticatie.vlaanderen.be';
 export const API_BASE = process.env.API_URL || 'https://iv.api.vlaanderen.be/api/v1/organisaties/verenigingen/';
