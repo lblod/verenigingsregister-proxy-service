@@ -10,7 +10,6 @@ This service acts as a proxy for the Verenigingsregister API, handling authentic
 - Multi-tenant support: Each organization has its own OAuth2 client credentials
 - Multi-layer authorization:
   - Role-based: checks `verenigingen-beheerder` role
-  - Processing agreements: validates organization has processing agreement (configurable)
   - Werkingsgebied: validates the user's admin unit (commune) covers the association's postal code area
 - Supports CRUD operations for verenigingen, contactgegevens, locaties, and vertegenwoordigers
 - Axios configured to handle 304 (Not Modified) responses gracefully
@@ -36,10 +35,8 @@ The following environment variables are read from `constants.js`:
 | Variable                            | Required | Default                                           | Description                                                                      |
 | ----------------------------------- | -------- | ------------------------------------------------- | -------------------------------------------------------------------------------- |
 | `SESSION_GRAPH`                     | No       | `http://mu.semte.ch/graphs/sessions`              | SPARQL graph URI containing session data                                         |
-| `ORGANISATION_GRAPH`                | No       | `http://mu.semte.ch/graphs/public`                | SPARQL graph URI containing organization/OVO code data                           |
+| `ORGANISATION_GRAPH`                | No       | `http://mu.semte.ch/graphs/public`                | SPARQL graph URI containing organization data (used for werkingsgebied check)    |
 | `CLIENT_CONFIG_GRAPH`               | No       | `http://mu.semte.ch/graphs/client-configurations` | SPARQL graph URI containing OAuth2 client configuration per organization         |
-| `PROCESSING_AGREEMENT_GRAPH`        | No       | `http://mu.semte.ch/graphs/processing-agreements` | SPARQL graph URI containing processing agreement data                            |
-| `ENABLE_PROCESSING_AGREEMENT_CHECK` | No       | `true`                                            | _FEATURE FLAG_ Enable processing agreement validation. Set to `false` to disable |
 | `ENABLE_REQUEST_REASON_CHECK`       | No       | `true`                                            | _FEATURE FLAG_ Enable X-Request-Reason header validation. Set to `false` to disable |
 | `ENABLE_TERRITORY_CHECK`            | No       | `true`                                            | _FEATURE FLAG_ Enable werkingsgebied (territory) validation. Set to `false` to disable |
 | `DATA_ACCESS_LOG_GRAPH`             | No       | `http://mu.semte.ch/graphs/data-access-logs`      | SPARQL graph URI for storing data access logs                                    |
@@ -66,7 +63,7 @@ volumes:
 
 OAuth2 client credentials are resolved per-organization from `CLIENT_CONFIG_GRAPH`.
 
-## Authorization & Processing Agreements
+## Authorization
 
 ### Authorization Flow
 
@@ -74,53 +71,7 @@ The service implements a multi-layer authorization system:
 
 1. **Role Check**: Validates user role via the `mu-auth-allowed-groups` header:
    - `verenigingen-beheerder`: Full access to all operations
-2. **Processing Agreement Validation** (optional): Verifies that the organization has a valid processing agreement
-3. **Werkingsgebied Check** (optional): For association-specific requests, validates that the user's admin unit's werkingsgebied covers the association's primary site postal code
-
-### OVO Code Resolution
-
-The service queries the session graph to resolve a session ID to an OVO code:
-
-```sparql
-PREFIX session: <http://mu.semte.ch/vocabularies/session/>
-PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
-PREFIX dct: <http://purl.org/dc/terms/>
-
-SELECT DISTINCT ?identifier WHERE {
-  GRAPH <${SESSION_GRAPH}> {
-    ?session
-      ext:sessionGroup ?adminUnit .
-  }
-
-  GRAPH <${ORGANISATION_GRAPH}> {
-    ?adminUnit
-      dct:identifier ?identifier .
-    FILTER(STRSTARTS(STR(?identifier), "OVO"))
-  }
-}
-```
-
-### Processing Agreements Model
-
-**Note:** Processing agreement validation is currently a placeholder implementation.
-
-When `ENABLE_PROCESSING_AGREEMENT_CHECK=true`, the service will validate that the local government (identified by OVO code) has a processing agreement to access the Verenigingsregister API.
-
-**Expected Data Model:**
-
-The processing agreements should be stored in a `PROCESSING_AGREEMENT_GRAPH` with the following structure:
-
-```turtle
-PREFIX dpv: <https://w3id.org/dpv#>
-
-<http://example.org/processing-agreement/123>
-  dpv:hasDataProcessor <https://data.lblod.info/id/bestuurseenheden/xyz>  # Local government
-
-```
-
-Assumption: the PROCESSING_AGREEMENT_GRAPH contains only currently valid subprocessing agreements.
-We only check for existence of agreements, not validity periods.
-The agreements in full and their lifecycle are assumed to be managed elsewhere.
+2. **Werkingsgebied Check** (optional): For association-specific requests, validates that the user's admin unit's werkingsgebied covers the association's primary site postal code
 
 ### Werkingsgebied Check
 
@@ -187,8 +138,8 @@ Access tokens are cached per client ID to improve performance:
 
 - `GET /verenigingen/:vCode` - Retrieve association details. Requires `X-Request-Reason` header when `ENABLE_REQUEST_REASON_CHECK=true` (see [Data Access Logging](#data-access-logging)). Performs werkingsgebied check.
 - `HEAD /verenigingen/:vCode` - Check resource existence without logging. Uses fallback client if no per-org client configured (`FALLBACK_HEAD_CLIENT_ID`).
-- `GET /verenigingen/:vCode/authorization-check` - Authorization pre-check. Validates role, processing agreement, and werkingsgebied checks without requiring `X-Request-Reason` and without accessing or returning association data. Returns JSON with authorization result and denial details.
-- `GET /verenigingen/:vCode/basisinformatie` - Retrieve non-sensitive association data (detail API with sensitive fields stripped). Role check only (no processing agreement, territory, reason checks, or data access logging).
+- `GET /verenigingen/:vCode/authorization-check` - Authorization pre-check. Validates role and werkingsgebied checks without requiring `X-Request-Reason` and without accessing or returning association data. Returns JSON with authorization result and denial details.
+- `GET /verenigingen/:vCode/basisinformatie` - Retrieve non-sensitive association data (detail API with sensitive fields stripped). Role check only (no territory or reason checks, no data access logging).
 
 ### Write Operations (requires `verenigingen-beheerder` role)
 
@@ -219,16 +170,6 @@ HTTP 401
 {
   "error": "Unauthorized",
   "detail": "Missing required role: verenigingen-beheerder"
-}
-```
-
-**Unauthorized - No OVO Code:**
-
-```json
-HTTP 401
-{
-  "error": "Unauthorized",
-  "detail": "Processing agreement check failed: No OVO code found for session"
 }
 ```
 
